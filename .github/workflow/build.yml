@@ -1,0 +1,77 @@
+name: Build GoogleUI
+
+on:
+  workflow_dispatch:
+    inputs:
+      preloader_url:
+        description: 'Direct HTTPS URL for the exact ARM64 libpreloader.so (LeviLauncher 1.5.18)'
+        required: true
+        type: string
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build unzip python3 clang lld nodejs
+
+      - name: Install Android SDK / NDK
+        uses: android-actions/setup-android@v3
+      - name: Install NDK
+        run: |
+          sdkmanager "platforms;android-28" "build-tools;34.0.0" "ndk;27.2.12479018"
+          echo "ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/27.2.12479018" >> "$GITHUB_ENV"
+
+      - name: Resolve libpreloader.so
+        env:
+          INPUT_URL: ${{ inputs.preloader_url }}
+        run: |
+          set -euo pipefail
+          mkdir -p runtime
+          if [[ -n "${INPUT_URL}" ]]; then
+            curl -fsSL --retry 3 "${INPUT_URL}" -o runtime/libpreloader.so
+          elif [[ -f runtime/libpreloader.so ]]; then
+            echo 'Using repository-supplied runtime/libpreloader.so'
+          else
+            echo 'A direct HTTPS URL is required on workflow_dispatch, or runtime/libpreloader.so must exist in the repository.'
+            exit 2
+          fi
+          ACTUAL="$(sha256sum runtime/libpreloader.so | awk '{print $1}')"
+          EXPECTED="8d628e4251498a867f9058c045068207616af170dde7b0962528fd4d54e47fed"
+          [[ "$ACTUAL" == "$EXPECTED" ]] || { echo "Unexpected libpreloader.so SHA-256: $ACTUAL"; exit 3; }
+
+      - name: Generate embedded data
+        run: |
+          python3 scripts/generate-adblock-dex.py \
+            --dex resources/adblock_client.dex \
+            --header include/AdBlockClientDex.hpp \
+            --source src/AdBlockClientDex.cpp
+          python3 scripts/generate-adblock-data.py \
+            --template resources/adblock/universal.js \
+            --hosts resources/adblock/hosts.txt \
+            --tokens resources/adblock/url_tokens.txt \
+            --source src/AdBlockData.cpp \
+            --runtime-js build/adblock_runtime.js
+          node --check build/adblock_runtime.js
+
+      - name: Static QA
+        run: python3 scripts/static-qa.py
+
+      - name: Build .levipack
+        env:
+          PRELOADER_SO: ${{ github.workspace }}/runtime/libpreloader.so
+          ANDROID_NDK_ROOT: ${{ env.ANDROID_HOME }}/ndk/27.2.12479018
+        run: |
+          export PATH="$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH"
+          scripts/build-arm64.sh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GoogleUI-V1.0.0
+          path: build-arm64/libGoogleUI_V1.0.0.levipack
+          if-no-files-found: error
