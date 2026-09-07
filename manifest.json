@@ -1,0 +1,9 @@
+{
+  "type": "preload-native",
+  "name": "GoogleUI",
+  "author": "xiomi",
+  "version": "1.0.0",
+  "entry": "libgoogle_ui.so",
+  "icon": "resources/google_button.png",
+  "minecraft_versions": ["26.45.*"]
+}

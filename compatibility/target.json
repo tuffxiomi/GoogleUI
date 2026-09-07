@@ -1,0 +1,27 @@
+{
+  "minecraft": {
+    "version_label": "26.45.1",
+    "library": "libminecraftpe.so",
+    "size": 313903456,
+    "sha256": "444e77434bdd3789a0d90978d06336a99831e78e52955e528258cc375dfa0557",
+    "sha1": "efa58f5f3cbbaa80fbac820ce357d19b3cee1106",
+    "gnu_build_id": "868e275cb295e9a275bb29d2258edc2f7dc48761",
+    "architecture": "AArch64"
+  },
+  "levilauncher": {
+    "version_label": "1.5.18",
+    "library": "libpreloader.so",
+    "sha256": "8d628e4251498a867f9058c045068207616af170dde7b0962528fd4d54e47fed",
+    "gnu_build_id": "83e3c5fc45b1ffdc62ef644c3e3b25715fe4d90b",
+    "architecture": "AArch64"
+  },
+  "bridge": {
+    "required_hooks": [
+      "nativeGetExternalModsInfo",
+      "nativeSetExternalModConfig",
+      "nativeGetDrawCommands",
+      "nativeGetDrawCommandsRevision branch target"
+    ],
+    "optional_hooks": ["nativeToggleExternalMod"]
+  }
+}

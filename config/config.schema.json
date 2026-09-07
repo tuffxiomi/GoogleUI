@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GoogleUI Configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "default_enabled": {"type": "boolean", "const": true},
+    "auto_resolution": {"type": "boolean", "const": true},
+    "ad_blocking": {"type": "boolean", "const": true},
+    "button_url": {"type": "string", "minLength": 1, "maxLength": 1023, "pattern": "^(https?://)?[^\\s]+$", "default": "https://www.google.com"}
+  },
+  "required": ["default_enabled", "auto_resolution", "ad_blocking", "button_url"]
+}
